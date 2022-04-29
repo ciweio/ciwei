@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <script src="./jquery-3.6.0.js"></script>
+    <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <!--axios-->
+    <script src="axios.min.js"></script>
+    <style>
+        #parent {
+            width: 1100px;
+            height: 2000px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 800px;
+            text-align: center;
+            float: left;
+        }
+
+        th {
+            background-color: #009B84;
+            color: white;
+            text-align: center;
+            font-size: 20px;
+            line-height: 40px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2
+        }
+
+        td {
+            line-height: 36px;
+        }
+
+        a {
+            cursor:pointer;
+        }
+
+        tbody tr td a {
+            text-decoration: none;
+            color: cadetblue;
+        }
+
+        tbody tr td a:hover {
+            color: crimson;
+        }
+
+        input {
+            width: 100px;
+            height: 25px;
+        }
+
+        button {
+            width: 70px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .btn_upd {
+            background-color: #82BA74;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            float: left;
+            margin: 3px 0 0 29px;
+        }
+
+        .btn_del {
+            background-color: #FC4F59;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            float: right;
+            margin: 3px 29px 0 0;
+        }
+
+        .btn_add {
+            width: 100px;
+            float: right;
+            margin-right: 20px;
+        }
+
+        .col_id {
+            width: 100px;
+        }
+
+        .col_name {
+            width: 130px;
+        }
+
+        .col_subject {
+            width: 200px;
+        }
+
+        .col_score {
+            width: 120px;
+        }
+
+        .col_opt {
+            width: 200px;
+        }
+
+        #bar_add {
+            background-color: #009B84;
+            margin-top: 50px;
+            width: 790px;
+            height: 40px;
+            padding: 10px 0 0 10px;
+            float: left;
+        }
+
+        span {
+            color: white;
+        }
+
+        #bar_upd {
+            width: 280px;
+            height: 320px;
+            background-color: #009B84;
+            float: right;
+            margin-left: 20px;
+        }
+
+        h3 {
+            color: white;
+            text-align: center;
+        }
+
+        .input_upd {
+            width: 200px;
+            margin-left: 36px;
+            margin-bottom: 10px;
+        }
+
+        .desc_upd {
+            margin-left: 36px;
+        }
+
+        .btn_upd2 {
+            width: 100px;
+            position: relative;
+            left: 90px;
+            top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="parent">
+        <table id="form_grade">
+            <thead>
+                <tr>
+                    <th class="col_id">ID</th>
+                    <th class="col_name">Name</th>
+                    <th class="col_subject">Subject</th>
+                    <th class="col_score">Score</th>
+                    <th class="col_opt">Opt</th>
+                </tr>
+            </thead>
+            <tbody id="form_grade_body">
+                <tr v-for="(item,index) in content">
+                    <td class="col_id">{{item.sid}}</td>
+                    <td class="col_name">{{item.sname}}</td>
+                    <td class="col_subject">{{item.subject}}</td>
+                    <td class="col_score">{{item.score}}</td>
+                    <td class="col_opt">
+                        <button class="btn_del" @click="delStudent(item.sid,index)">DELETE</button>
+                        &nbsp;
+                        <button class="btn_upd" @click="getStudentUpdating(item)">UPDATE</button>
+                    </td>
+                </tr>
+<!--            <tr>-->
+<!--                <td>test1</td>-->
+<!--                <td>test小明</td>-->
+<!--                <td>test java</td>-->
+<!--                <td>test80</td>-->
+<!--                <td><a href="javascript:void(0)">删除</a></td>-->
+<!--            </tr>-->
+            </tbody>
+        </table>
+        <div id="bar_upd" v-show="!(upd_info.sname === '')">
+            <h3>Update Info</h3>
+            <span class="desc_upd">name:</span>
+            <label><input class="input_upd" v-model="upd_info.sname" type="text"></label>
+            <span class="desc_upd">subject:</span>
+            <label><input class="input_upd" v-model="upd_info.subject" type="text"></label>
+            <span class="desc_upd">score:</span>
+            <label><input class="input_upd" v-model="upd_info.score" type="text"></label>
+            <button class="btn_upd2" @click="updateStudent">UPDATE</button>
+        </div>
+        <div id="bar_add">
+            <span>name:</span>
+            <label><input class="col_name" v-model="student_info.sname" type="text"></label>
+            <span>subject:</span>
+            <label><input class="col_subject" v-model="student_info.subject" type="text"></label>
+            <span>score:</span>
+            <label><input class="col_score" v-model="student_info.score" type="text"></label>
+            <button class="btn_add" @click="addStudent">Add</button>
+        </div>
+    </div>
+
+<script>
+    //Vue-axios
+    let app = new Vue({
+        el: '#parent',
+        data: {
+            content:[],
+            student_info:{
+                sid:'',
+                sname:'',
+                subject:'',
+                score:''
+            },
+            upd_info:{
+                sid:'',
+                sname:'',
+                subject:'',
+                score:''
+            }
+        },
+        created: function () {
+            this.init_data();
+            console.log(this.content);
+
+            // axios.get("http://localhost/ciwei/student").then(function (ret) {
+            //     app.content = ret.data.data;
+            //     console.log(app.content)
+            // }).catch((function (error) {
+            //     console.log(error);
+            // }))
+        },
+        methods: {
+            addStudent: async function () {
+                await axios.post("http://localhost/ciwei/student/add", this.student_info);
+                await this.init_data();
+                this.student_info = {
+                    sname: "",
+                    subject: "",
+                    score: ""
+                }
+            },
+            delStudent: async function (sid, index) {
+                let ret = await axios.get("http://localhost/ciwei/student/" + sid);
+                console.log("delete row[" + (index + 1) + "] " + ret.data.msg);
+                await this.init_data();
+                // axios.get("http://localhost/ciwei/student/" + sid).then(function (ret) {
+                //     app.content.splice(index, 1);
+                //     console.log("delete row[" + (index + 1) + "] " + ret.data.msg);
+                //     alert("Delete Success");
+                // }).catch((function (error) {
+                //     console.log(error);
+                // }))
+            },
+            getStudentUpdating: function (item) {
+                this.upd_info.sid = item.sid;
+                this.upd_info.sname = item.sname;
+                this.upd_info.subject = item.subject;
+                this.upd_info.score = item.score;
+            },
+            updateStudent: async function () {
+                await axios.post("http://localhost/ciwei/student/upd", this.upd_info);
+                await this.init_data();
+                this.upd_info = {
+                    sname: "",
+                    subject: "",
+                    score: ""
+                }
+            },
+            init_data: async function () {//simplify async
+                let ret = await axios.get("http://localhost/ciwei/student");
+                app.content = ret.data.data;
+            }
+        }
+    })
+
+    //jQuery-Ajax
+    // $(function () {
+    //     addE();
+    // });
+    // function delE(a) {
+    //     $.get('http://localhost/ciwei/student/'+$(a).attr('data-index'),function () {//异步
+    //         $('#form_grade_body').empty();
+    //         addE();
+    //     });
+    // }
+    // function addE() {
+    //     $.get('http://localhost/ciwei/student',function (ret) {
+    //         // console.log(ret);
+    //         if (ret.code === 20000){
+    //             for (let data of ret.data) {
+    //                 var tr = $('<tr></tr>')
+    //                     .append('<td>'+data.sid+'</td>')
+    //                     .append('<td>'+data.sname+'</td>')
+    //                     .append('<td>'+data.subject+'</td>')
+    //                     .append('<td>'+data.score+'</td>')
+    //                     .append('<td><a onclick="delE(this)" data-index='+data.sid+'>删除</a></td>');
+    //                 // console.log(data.sid);
+    //                 $('#form_grade_body').append(tr);
+    //             }
+    //         }
+    //     })
+    // }
+
+    //javascript原生-ajax
+    // //1 create object
+    // let xmlHttp = new XMLHttpRequest();
+    //
+    // //2 request info
+    // xmlHttp.open("GET", "http://localhost/ciwei/student");
+    //
+    // //3 listening message return
+    // xmlHttp.onreadystatechange = function () {
+    //     if (xmlHttp.status === 200 && xmlHttp.readyState === 4) {//获取数据
+    //         // console.log(xmlHttp.responseText);
+    //         let result = JSON.parse(xmlHttp.responseText)
+    //         if (result.code === 20000) {
+    //             // console.log(result.data);
+    //             for (let datum of result.data) {//增加节点
+    //                 // console.log(datum);
+    //                 //create text node
+    //                 let node_sid = document.createTextNode(datum.sid);
+    //                 let node_sname = document.createTextNode(datum.sname);
+    //                 let node_subject = document.createTextNode(datum.subject);
+    //                 let node_score = document.createTextNode(datum.score);
+    //                 let node_opn_del = document.createTextNode("删除");
+    //                 //del: text -> a
+    //                 let a_del = document.createElement("a");
+    //                 a_del.setAttribute("onclick", "del_row(this)");
+    //                 a_del.setAttribute("data-index",datum.sid);
+    //                 a_del.appendChild(node_opn_del);
+    //                 //add td
+    //                 let td_sid = document.createElement("td");
+    //                 let td_sname = document.createElement("td");
+    //                 let td_subject = document.createElement("td");
+    //                 let td_score = document.createElement("td");
+    //                 let td_opn_del = document.createElement("td");
+    //                 td_sid.appendChild(node_sid);
+    //                 td_sname.appendChild(node_sname);
+    //                 td_subject.appendChild(node_subject);
+    //                 td_score.appendChild(node_score);
+    //                 td_opn_del.appendChild(a_del);
+    //                 //add tr
+    //                 let tr = document.createElement("tr");
+    //                 tr.appendChild(td_sid);
+    //                 tr.appendChild(td_sname);
+    //                 tr.appendChild(td_subject);
+    //                 tr.appendChild(td_score);
+    //                 tr.appendChild(td_opn_del);
+    //                 //get tbody
+    //                 let t_body = document.getElementById("form_grade_body");
+    //                 t_body.appendChild(tr);
+    //             }
+    //         }
+    //     }
+    // }
+    //
+    // xmlHttp.send();//4 send
+    //
+    // function del_row(datum) {
+    //     console.log(datum.getAttribute("data-index"));
+    //     let xmlHttp1 = new XMLHttpRequest();
+    //     xmlHttp1.open("GET", "http://localhost/ciwei/student"+"/"+datum.getAttribute("data-index"));
+    //     xmlHttp1.send();
+    //     //flush
+    //     window.location.reload();
+    // }
+</script>
+</body>
+</html>
